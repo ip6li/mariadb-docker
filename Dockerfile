@@ -35,6 +35,9 @@ run DEBIAN_FRONTEND=noninteractive apt-get install -q -y \
 ADD ./50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf
 ADD ./50-mysqld_safe.cnf /etc/mysql/mariadb.conf.d/50-mysqld_safe.cnf
 
+ADD ./post-init.sh /tmp/post-init.sh
+RUN chown root:root /tmp/post-init.sh && chmod 700 /tmp/post-init.sh
+
 COPY ./entrypoint.sh /root/entrypoint.sh
 RUN chmod 700 /root/entrypoint.sh
 ENTRYPOINT [ "/root/entrypoint.sh" ]

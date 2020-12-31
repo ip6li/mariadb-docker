@@ -4,12 +4,20 @@ if [ -e /run/mysqld ]; then
   mkdir /run/mysqld
 fi
 
-chown -R mysql:mysql /var/lib/mysql /run/mysqld
+chown -R mysql:mysql /var/lib/mysql
+
+if [ -d /run/mysqld ]; then
+  chown -R mysql:mysql /run/mysqld
+fi
+
 if [ ! -f /var/lib/mysql/ibdata1 ]; then
   /usr/bin/mysql_install_db
 fi
 
-/usr/bin/mysqld_safe
+/tmp/post-init.sh &
 
-tail -f /dev/null
+unset MYSQL_PASSWORD
+unset HEALTHCHECK_PASSWORD
+
+/usr/bin/mysqld_safe
 

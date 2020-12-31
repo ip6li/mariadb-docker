@@ -5,6 +5,9 @@ services:
     hostname: mysql
     build:
       context: .
+    environment:
+      - MYSQL_PASSWORD
+      - HEALTHCHECK_PASSWORD
     volumes:
       - ./data:/var/lib/mysql
     ports:
@@ -12,7 +15,7 @@ services:
     logging:
       driver: json-file
     healthcheck:
-      test: ["CMD", "/bin/bash", "-c", "/usr/bin/mysql --user=docker-healthcheck --host=127.0.0.1 --password=juEjwSnLazTTc3cKTc1Z5cshEJTrN5v9 --batch --silent -e 'select 1;' > /dev/null || exit 1"]
+      test: ["CMD", "/bin/bash", "-c", "/usr/bin/mysql --user=docker-healthcheck --host=127.0.0.1 --password=$HEALTHCHECK_PASSWORD --batch --silent -e 'select 1;' > /dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
