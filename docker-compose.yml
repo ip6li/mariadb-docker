@@ -1,0 +1,20 @@
+version: '3.7'
+
+services:
+  mysql:
+    hostname: mysql
+    build:
+      context: .
+    volumes:
+      - ./data:/var/lib/mysql
+    ports:
+      - 192.168.48.1:3306:3306
+    logging:
+      driver: json-file
+    healthcheck:
+      test: ["CMD", "/bin/bash", "-c", "/usr/bin/mysql --user=docker-healthcheck --host=127.0.0.1 --password=juEjwSnLazTTc3cKTc1Z5cshEJTrN5v9 --batch --silent -e 'select 1;' > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+

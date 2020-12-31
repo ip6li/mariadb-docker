@@ -1,0 +1,12 @@
+#!/bin/sh
+
+while getopts v opt
+do
+  case $opt in
+    v) LOG="docker-compose logs -ft";;
+    *) true
+  esac
+done
+
+docker-compose down && docker-compose up -d && $LOG
+
