@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+. ./.env
+
+TARGET_DIR=${TARGET_DIR:-"./mariadb-backup"}
+GPG_KEYID=${GPG_KEYID:-""}
+MAX_DAYS=${MAX_DAYS:-8}
+
+NOW=$(date +%Y%m%d.%H%M%S)
+
+TMPFILE="my_backup.bak.$$"
+TMPNAME="${TARGET_DIR}/${TMPFILE}"
+
+PATH=/bin:/usr/bin
+export PATH
+
+if [ -z "$TARGET_DIR" ]; then
+  echo "###fatal: TARGET_DIR not set"
+  exit 1
+fi
+
+umask 077
+ID=$(docker ps --filter "name=mariadb-mariadb-1" --format "{{.ID}}")
+if [ -z "$ID" ]; then
+  echo "MariaDB container not found"
+  exit 1
+fi
+docker exec -i $ID mariabackup --backup --target-dir="/backup/${TMPFILE}" --user=root --password="${MYSQL_PASSWORD}"
+if [ $? -eq 0 ]; then
+  cd "${TARGET_DIR}" || exit 1
+  tar cvJf my_backup.bak.${NOW}.xz "${TMPFILE}"
+  if [ ! -z "$GPG_KEYID" ]; then
+    gpg --trust-model always --encrypt --recipient ${GPG_KEYID} > "my_backup.bak.${NOW}.gpg" < "my_backup.bak.${NOW}.xz"
+    if [ $? -ne 0 ]; then
+      echo "Encryption failed"
+      exit 1
+    fi
+    rm -rf "my_backup.bak.${NOW}.xz"
+  fi
+  rm -rf "${TMPNAME}"
+else
+  rm -f $TMPNAME
+  echo "backup failed"
+fi
+
+# clean up
+cd "$TARGET_DIR" || exit 1
+find . -mtime +${MAX_DAYS} -exec rm -f "{}" \;
+
+# If exists, call storage script
+# rsync -e "ssh -p 23" /backup/cfadm/postgres/pg_backup.bak.20201229.* u252190@u252190.your-storagebox.de:
+if [ -x ./store-backup ]; then
+  ./store-backup "${FINAL_PATH}"
+fi
+

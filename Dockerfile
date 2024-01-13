@@ -1,4 +1,4 @@
-from debian:buster-slim
+from debian:bookworm-slim
 maintainer Christian Felsing <support@felsing.net>
 
 ARG hostname=mysql
