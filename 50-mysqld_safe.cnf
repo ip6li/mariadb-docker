@@ -10,11 +10,11 @@
 #
 [Service]
 # User=mysql
-StandardOutput=/dev/stderr
-StandardError=/dev/stderr
-# SyslogFacility=daemon
-# SyslogLevel=err
-# SyslogIdentifier=mysqld
+#StandardOutput=/dev/stderr
+#StandardError=/dev/stderr
+SyslogFacility=daemon
+SyslogLevel=info
+SyslogIdentifier=mysqld
 #
 # For more information, please read https://mariadb.com/kb/en/mariadb/systemd/
 #

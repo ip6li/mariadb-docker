@@ -1,31 +1,34 @@
 #!/usr/bin/env bash
 
-. ./.env
+usage() {
+  echo "Usage: $0 <Backup dir from mariadb-backup>"
+  exit 1
+}
 
-TARGET_DIR=${TARGET_DIR:-"./mariadb-backup"}
-GPG_KEYID=${GPG_KEYID:-""}
-MAX_DAYS=${MAX_DAYS:-8}
-
-NOW=$(date +%Y%m%d.%H%M%S)
-
-TMPFILE="my_backup.bak.$$"
-TMPNAME="${TARGET_DIR}/${TMPFILE}"
+TARGET_DIR="$1"
+if [ -z "$TARGET_DIR" ]; then
+  usage
+fi
 
 PATH=/bin:/usr/bin
 export PATH
 
-if [ -z "$TARGET_DIR" ]; then
-  echo "###fatal: TARGET_DIR not set"
-  exit 1
-fi
-
-umask 077
 ID=$(docker ps --filter "label=MYSQL=mariadb" --format "{{.ID}}")
 if [ -z "$ID" ]; then
   echo "MariaDB container not found"
   exit 1
 fi
-docker exec -i $ID mariabackup --backup --target-dir="/backup/${TMPFILE}" --user=root --password="${MYSQL_PASSWORD}"
+
+docker exec -i $ID mariabackup --prepare --target-dir="${TARGET_DIR}"
+if [ $? -ne 0 ]; then
+  echo "Fatal: mariabackup --prepare --target-dir="${TARGET_DIR}" failed"
+  exit 2
+fi
+
+docker compose down
+
+docker exec -i $ID mariabackup --copy-back --target-dir="${TARGET_DIR}"
+
 if [ $? -eq 0 ]; then
   cd "${TARGET_DIR}" || exit 1
   tar cvJf my_backup.bak.${NOW}.xz "${TMPFILE}"

@@ -4,6 +4,8 @@ if [ -e /run/mysqld ]; then
   mkdir /run/mysqld
 fi
 
+/usr/sbin/usermod -a -G tty mysql
+
 chown -R mysql:mysql /var/lib/mysql
 
 if [ -d /run/mysqld ]; then
@@ -19,5 +21,7 @@ fi
 unset MYSQL_PASSWORD
 unset HEALTHCHECK_PASSWORD
 
-/usr/bin/mysqld_safe
+/usr/sbin/rsyslogd -n &
+
+/usr/bin/mysqld_safe --syslog
 
