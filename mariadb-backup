@@ -25,7 +25,7 @@ if [ -z "$ID" ]; then
   echo "MariaDB container not found"
   exit 1
 fi
-docker exec -i $ID mariabackup --backup --target-dir="/backup/${TMPFILE}" --user=root --password="${MYSQL_PASSWORD}"
+docker exec -i $ID mariadb-dump --all-databases --user=root --password="${MYSQL_PASSWORD}" > "${TMPNAME}"
 if [ $? -eq 0 ]; then
   cd "${TARGET_DIR}" || exit 1
   tar cvJf my_backup.bak.${NOW}.xz "${TMPFILE}"
@@ -37,6 +37,7 @@ if [ $? -eq 0 ]; then
     fi
     rm -rf "my_backup.bak.${NOW}.xz"
   fi
+  cd ..
   rm -rf "${TMPNAME}"
 else
   rm -f $TMPNAME

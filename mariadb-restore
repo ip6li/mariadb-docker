@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+echo "DO NOT USE!!!"
+exit 1
+
 usage() {
   echo "Usage: $0 <Backup dir from mariadb-backup>"
   exit 1
@@ -40,6 +43,7 @@ if [ $? -eq 0 ]; then
     fi
     rm -rf "my_backup.bak.${NOW}.xz"
   fi
+  cd ..
   rm -rf "${TMPNAME}"
 else
   rm -f $TMPNAME
