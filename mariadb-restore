@@ -1,16 +1,24 @@
 #!/usr/bin/env bash
 
-echo "DO NOT USE!!!"
-exit 1
-
 usage() {
-  echo "Usage: $0 <Backup dir from mariadb-backup>"
+  echo "Usage: $0 <Backup file from mariadb-backup to restore>"
   exit 1
 }
 
-TARGET_DIR="$1"
-if [ -z "$TARGET_DIR" ]; then
+BACKUP_FILE="$1"
+if [ -z "$BACKUP_FILE" ]; then
   usage
+fi
+
+. ./.env
+
+TARGET_DIR=${TARGET_DIR:-"./mariadb-backup"}
+GPG_KEYID=${GPG_KEYID:-""}
+TMPNAME="${TARGET_DIR}/${BACKUP_FILE}"
+
+if [ ! -O "${TMPNAME}" ]; then
+  echo "Cannot access ${TMPNAME}"
+  exit 1
 fi
 
 PATH=/bin:/usr/bin
@@ -22,41 +30,25 @@ if [ -z "$ID" ]; then
   exit 1
 fi
 
-docker exec -i $ID mariabackup --prepare --target-dir="${TARGET_DIR}"
-if [ $? -ne 0 ]; then
-  echo "Fatal: mariabackup --prepare --target-dir="${TARGET_DIR}" failed"
-  exit 2
+echo "$BACKUP_FILE" | grep '\.gpg$' > /dev/null
+if [ $? -eq 0 ]; then
+  XZ_FILE=$(basename "${BACKUP_FILE}" .gpg).xz
+  gpg -d "${TMPNAME}" > "${TARGET_DIR}/${XZ_FILE}"
+else
+  XZ_FILE="${BACKUP_FILE}"
 fi
 
-docker compose down
+cd "${TARGET_DIR}"
+SQL_FILE=$(tar xvf "${XZ_FILE}")
+cd ..
 
-docker exec -i $ID mariabackup --copy-back --target-dir="${TARGET_DIR}"
-
-if [ $? -eq 0 ]; then
-  cd "${TARGET_DIR}" || exit 1
-  tar cvJf my_backup.bak.${NOW}.xz "${TMPFILE}"
-  if [ ! -z "$GPG_KEYID" ]; then
-    gpg --trust-model always --encrypt --recipient ${GPG_KEYID} > "my_backup.bak.${NOW}.gpg" < "my_backup.bak.${NOW}.xz"
-    if [ $? -ne 0 ]; then
-      echo "Encryption failed"
-      exit 1
-    fi
-    rm -rf "my_backup.bak.${NOW}.xz"
-  fi
-  cd ..
-  rm -rf "${TMPNAME}"
-else
-  rm -f $TMPNAME
-  echo "backup failed"
+docker exec -i $ID mariadb < "${TARGET_DIR}/${SQL_FILE}"
+if [ $? -ne 0 ]; then
+  echo "Fatal: mariadb < ${TARGET_DIR}/${SQL_FILE} failed"
+  exit 2
 fi
 
 # clean up
 cd "$TARGET_DIR" || exit 1
-find . -mtime +${MAX_DAYS} -exec rm -f "{}" \;
-
-# If exists, call storage script
-# rsync -e "ssh -p 23" /backup/cfadm/postgres/pg_backup.bak.20201229.* u252190@u252190.your-storagebox.de:
-if [ -x ./store-backup ]; then
-  ./store-backup "${FINAL_PATH}"
-fi
+rm -f "${XZ_FILE}" "${SQL_FILE}"
 

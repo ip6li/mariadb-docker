@@ -49,7 +49,6 @@ cd "$TARGET_DIR" || exit 1
 find . -mtime +${MAX_DAYS} -exec rm -f "{}" \;
 
 # If exists, call storage script
-# rsync -e "ssh -p 23" /backup/cfadm/postgres/pg_backup.bak.20201229.* u252190@u252190.your-storagebox.de:
 if [ -x ./store-backup ]; then
   ./store-backup "${FINAL_PATH}"
 fi
