@@ -6,6 +6,8 @@ services:
     environment:
       - MYSQL_PASSWORD
       - HEALTHCHECK_PASSWORD
+      - hostname
+      - domain
     volumes:
       - ./data:/var/lib/mysql
     logging:

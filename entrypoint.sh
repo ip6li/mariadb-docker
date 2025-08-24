@@ -23,5 +23,6 @@ unset HEALTHCHECK_PASSWORD
 
 /usr/sbin/rsyslogd -n &
 
-/usr/bin/mysqld_safe --syslog
+#/usr/bin/mysqld_safe --syslog
+/usr/bin/mariadbd-safe --syslog
 
