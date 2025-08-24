@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 
-docker compose exec mysql mysql -p
+. ./.env
+
+docker compose exec mysql mysql --password="${MYSQL_PASSWORD}"
 

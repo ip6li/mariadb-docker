@@ -1,8 +1,8 @@
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 LABEL Christian Felsing <support@felsing.net>
 
 ARG hostname=mysql
-ARG domain=felsing.net
+ARG domain=example.com
 ARG fqname=${hostname}.${domain}
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
